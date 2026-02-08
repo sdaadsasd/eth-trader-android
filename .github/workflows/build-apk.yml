@@ -24,4 +24,5 @@ jobs:
     
     - name: Build APK
       run: |
-        buildozer android debug
+        # 使用 yes 自动接受所有许可
+        yes | buildozer android debug 2>&1 | tee build.log
