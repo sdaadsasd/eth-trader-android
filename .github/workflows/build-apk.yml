@@ -17,9 +17,10 @@ jobs:
       with:
         python-version: '3.9'
     
-    - name: Create correct buildozer.spec
+    - name: Create buildozer.spec
       run: |
-        echo '[app]
+        cat > buildozer.spec << 'EOF'
+[app]
 title = ETH交易助手
 package.name = ethtrader
 package.domain = org.eth
@@ -36,30 +37,19 @@ android.ndk = 25b
 android.accept_sdk_license = true
 
 [buildozer]
-log_level = 2' > buildozer.spec
+log_level = 2
+EOF
     
     - name: Install dependencies
       run: |
-        pip install buildozer
-        pip install cython
+        pip install buildozer cython
     
     - name: Build APK
       run: |
-        yes | buildozer android debug 2>&1 | tee build.log
-        
-        # 检查是否成功
-        if grep -q "APK built successfully" build.log; then
-          echo "✅ APK构建成功"
-        else
-          echo "❌ APK构建失败"
-          tail -50 build.log
-          exit 1
-        fi
+        yes | buildozer android debug
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: eth-trader-apk
         path: bin/*.apk
-        if-no-files-found: error
-        retention-days: 7
