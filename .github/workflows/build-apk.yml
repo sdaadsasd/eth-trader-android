@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       log_level:
-        description: 'Log level'     
+        description: 'Log level'
         required: true
         default: '2'
 
@@ -27,7 +27,6 @@ jobs:
         pip install buildozer==1.5.0
         pip install cython==0.29.33
         
-        # 安装系统依赖
         sudo apt-get update
         sudo apt-get install -y \
           git \
@@ -48,7 +47,6 @@ jobs:
     
     - name: Initialize Buildozer
       run: |
-        # 创建buildozer.spec（覆盖现有的）
         echo '[app]
 title = ETH交易助手
 package.name = ethtrader
@@ -68,22 +66,20 @@ android.accept_sdk_license = true
 [buildozer]
 log_level = 2' > buildozer.spec
         
-        # 初始化（不清理）
         buildozer init 2>&1 || true
     
     - name: Build APK (尝试1)
       run: |
         echo "=== 第一次构建尝试 ==="
-        # 使用yes自动接受许可
         yes | buildozer android debug 2>&1 | tee build.log || true
         
-        # 检查是否成功
         if ls bin/*.apk 1> /dev/null 2>&1; then
           echo "✅ 第一次构建成功！"
         else
           echo "⚠️ 第一次构建失败，尝试第二次..."
+    
     - name: Build APK (尝试2)
-      if: success() || failure()  # 无论第一次成功与否都运行
+      if: always()
       run: |
         echo "=== 第二次构建尝试 ==="
         yes | buildozer android debug 2>&1 | tee -a build.log
@@ -92,7 +88,6 @@ log_level = 2' > buildozer.spec
       run: |
         if ls bin/*.apk 1> /dev/null 2>&1; then
           echo "✅ APK构建成功！"
-          # 列出APK文件
           ls -la bin/
         else
           echo "❌ APK构建失败"
