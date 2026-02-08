@@ -772,4 +772,6 @@ ETH价格: ${price:.2f}
         popup.open()
 
 if __name__ == '__main__':
+    # Trigger build at: 2026-02-08 17:33
+
     ETHTraderApp().run()
