@@ -1,17 +1,13 @@
 name: Build Android APK
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      log_level:
-        description: 'Log level'
-        required: true
-        default: '2'
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
     
     steps:
     - uses: actions/checkout@v4
@@ -21,84 +17,10 @@ jobs:
       with:
         python-version: '3.9'
     
-    - name: Install Buildozer and dependencies
+    - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install buildozer==1.5.0
-        pip install cython==0.29.33
-        
-        sudo apt-get update
-        sudo apt-get install -y \
-          git \
-          zip \
-          unzip \
-          openjdk-11-jdk \
-          ccache \
-          autoconf \
-          libtool \
-          pkg-config \
-          zlib1g-dev \
-          libncurses5-dev \
-          libncursesw5-dev \
-          libtinfo5 \
-          cmake \
-          libffi-dev \
-          libssl-dev
+        pip install buildozer
     
-    - name: Initialize Buildozer
+    - name: Build APK
       run: |
-        echo '[app]
-title = ETH交易助手
-package.name = ethtrader
-package.domain = org.eth
-version = 5.1
-source.dir = .
-source.main = main.py
-requirements = python3,kivy==2.2.1,requests,numpy
-orientation = portrait
-android.permissions = INTERNET
-android.api = 31
-android.minapi = 21
-android.sdk = 31
-android.ndk = 25b
-android.accept_sdk_license = true
-
-[buildozer]
-log_level = 2' > buildozer.spec
-        
-        buildozer init 2>&1 || true
-    
-    - name: Build APK (尝试1)
-      run: |
-        echo "=== 第一次构建尝试 ==="
-        yes | buildozer android debug 2>&1 | tee build.log || true
-        
-        if ls bin/*.apk 1> /dev/null 2>&1; then
-          echo "✅ 第一次构建成功！"
-        else
-          echo "⚠️ 第一次构建失败，尝试第二次..."
-    
-    - name: Build APK (尝试2)
-      if: always()
-      run: |
-        echo "=== 第二次构建尝试 ==="
-        yes | buildozer android debug 2>&1 | tee -a build.log
-    
-    - name: Check and upload APK
-      run: |
-        if ls bin/*.apk 1> /dev/null 2>&1; then
-          echo "✅ APK构建成功！"
-          ls -la bin/
-        else
-          echo "❌ APK构建失败"
-          echo "=== 最后100行日志 ==="
-          tail -100 build.log
-          exit 1
-        fi
-    
-    - name: Upload APK artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: eth-trader-apk
-        path: bin/*.apk
-        retention-days: 7
+        buildozer android debug
