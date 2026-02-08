@@ -1,18 +1,38 @@
-[app]
-title = ETH交易助手
-package.name = ethtrader
-package.domain = org.eth
-version = 5.1
-source.dir = .
-source.main = main.py
-requirements = python3,kivy==2.2.1,requests,numpy
-orientation = portrait
-android.permissions = INTERNET
-android.api = 31
-android.minapi = 21
-android.sdk = 31
-android.ndk = 25b
-android.accept_sdk_license = true
-
-[buildozer]  # ← 这里是关键！
-log_level = 2
+name: Build APK
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - run: pip install buildozer cython
+      
+      # 强制创建正确的 buildozer.spec
+      - run: |
+          echo '[app]
+  title = ETH交易助手
+  package.name = ethtrader
+  package.domain = org.eth
+  version = 5.1
+  source.dir = .
+  source.main = main.py
+  requirements = python3,kivy==2.2.1,requests,numpy
+  orientation = portrait
+  android.permissions = INTERNET
+  android.api = 31
+  android.minapi = 21
+  android.sdk = 31
+  android.ndk = 25b
+  android.accept_sdk_license = true
+  
+  [buildozer]
+  log_level = 2' > buildozer.spec
+      
+      - run: yes | buildozer android debug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: bin/*.apk
